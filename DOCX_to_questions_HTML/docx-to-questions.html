@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DOCX → questions.js | QuizLearn</title>
+<style>
+:root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#172033;background:#f4f6f9}
+*{box-sizing:border-box} body{margin:0}
+.app{
+    max-width:none;
+    margin:0;
+    padding:0;
+}
+.card{
+    background:white;
+    border:none;
+    border-radius:0;
+    padding:0;
+    box-shadow:none;
+}
+h1{margin:0 0 6px;font-size:26px}.sub{margin:0 0 20px;color:#596579}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+button,.filebtn{border:0;border-radius:10px;padding:11px 15px;font-weight:650;cursor:pointer;background:#e9edf3;color:#172033}
+.primary{background:#1f66d1;color:white}.danger{background:#fff0f0;color:#a32020}
+input[type=file]{display:none}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.panel{border:1px solid #e0e5eb;border-radius:12px;padding:14px;min-height:190px}
+.panel h2{font-size:15px;margin:0 0 10px}
+#files{margin:0;padding-left:22px;max-height:210px;overflow:auto}
+.status{margin-top:14px;padding:11px 13px;border-radius:10px;background:#f6f8fb}
+.warn{background:#fff8df}.ok{background:#edf9ef}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:8px;border-bottom:1px solid #e6e9ee;text-align:left;vertical-align:top}
+th{position:sticky;top:0;background:white}
+.preview{margin-top:16px;max-height:390px;overflow:auto;border:1px solid #e0e5eb;border-radius:12px}
+.small{font-size:12px;color:#697386}
+@media(max-width:760px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+<div class="card">
+
+<div class="toolbar">
+<label class="filebtn primary">📂 Επιλογή DOCX
+<input id="picker" type="file" accept=".docx" multiple>
+</label>
+<button id="clear">🗑 Καθαρισμός</button>
+<button id="download" class="primary" disabled>💾 Δημιουργία questions.js</button>
+</div>
+
+<div class="panel" style="min-height:auto;margin-bottom:16px">
+<h2>Γενικές ρυθμίσεις εξαγωγής</h2>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+<label>Reference
+<input id="reference" value="QuizLearn" style="width:100%;padding:9px;border:1px solid #dfe4ea;border-radius:8px">
+<label>ID έναρξης
+<input id="startId" type="number" min="1" value="1" style="width:100%;padding:9px;border:1px solid #dfe4ea;border-radius:8px"></label>
+</div>
+<div class="small" style="margin-top:8px">Το Category προκύπτει αυτόματα από το όνομα του DOCX, αφαιρώντας το «αριθμός-κοινό κείμενο-» και το «-Difficulty». Chapter και Category μπορούν να διορθωθούν στον πίνακα. Το Difficulty διαβάζεται από κάθε ερώτηση του DOCX.</div>
+</div>
+
+<div class="panel" id="metaPanel" style="min-height:auto;margin-bottom:16px">
+<h2>Ρυθμίσεις ανά DOCX</h2>
+<div style="overflow:auto">
+<table>
+<thead><tr><th>DOCX</th><th>Chapter</th><th>Category</th><th>Ερωτήσεις</th></tr></thead>
+<tbody id="metaBody"><tr><td colspan="4" class="small">Επιλέξτε DOCX για να εμφανιστούν οι ρυθμίσεις.</td></tr></tbody>
+</table>
+</div>
+</div>
+
+<div class="grid">
+<div class="panel">
+<h2>Επιλεγμένα αρχεία</h2>
+<ol id="files"><li class="small">Δεν έχουν επιλεγεί αρχεία.</li></ol>
+</div>
+<div class="panel">
+<h2>Έλεγχος</h2>
+<div id="summary" class="status">Περιμένω αρχεία DOCX.</div>
+<div class="small" style="margin-top:10px">
+Αναγνωρίζονται: αριθμημένες ερωτήσεις, A–B / A–C / A–D, Hint, Difficulty και Answer Key.
+Η σειρά των DOCX καθορίζει το chapter.
+</div>
+</div>
+</div>
+
+<div class="preview">
+<table>
+<thead><tr><th>ID</th><th>Chapter</th><th>Ερώτηση</th><th>Difficulty</th><th>Correct</th><th>Έλεγχος</th></tr></thead>
+<tbody id="tbody"><tr><td colspan="6" class="small">Δεν υπάρχει προεπισκόπηση.</td></tr></tbody>
+</table>
+</div>
+</div>
+</div>
+
+<!--
+  Mammoth.js διαβάζει DOCX μέσα στον browser.
+  Για πλήρως offline χρήση, αποθήκευσε το mammoth.browser.min.js στον ίδιο φάκελο
+  και άλλαξε το src σε "./mammoth.browser.min.js".
+-->
+<script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js"></script>
+<script>
+const picker=document.getElementById('picker');
+const filesEl=document.getElementById('files');
+const summary=document.getElementById('summary');
+const tbody=document.getElementById('tbody');
+const downloadBtn=document.getElementById('download');
+const clearBtn=document.getElementById('clear');
+const referenceEl=document.getElementById('reference');
+const metaBody=document.getElementById('metaBody');
+const startIdEl=document.getElementById('startId');
+let parsed=[];
+let fileMeta=[];
+
+const clean=s=>(s||'').replace(/\s+/g,' ').trim();
+const esc=s=>JSON.stringify(s??'');
+
+function inferCategory(fileName){
+  return fileName
+    .replace(/\.docx$/i,'')
+    .replace(/-Difficulty$/i,'')
+    .replace(/^\d+-[^-]+-/,'')
+    .trim();
+}
+function correctIndex(letter){ return {A:0,B:1,C:2,D:3}[letter]; }
+
+function parseText(text,fileName,chapter){
+  let lines=text.split(/\r?\n/).map(clean).filter(Boolean);
+  const title=lines[0] || fileName.replace(/\.docx$/i,'');
+  const keyAt=lines.findIndex(x=>x.toLowerCase()==='answer key');
+  const main=keyAt>=0?lines.slice(0,keyAt):lines;
+  const keyLines=keyAt>=0?lines.slice(keyAt+1):[];
+
+  let starts=[];
+  main.forEach((x,i)=>{if(/^\d+\.\s+/.test(x)) starts.push(i)});
+  let qs=[];
+
+  starts.forEach((start,p)=>{
+    const end=p+1<starts.length?starts[p+1]:main.length;
+    const block=main.slice(start,end);
+    const m=block[0].match(/^(\d+)\.\s+(.*)$/);
+    if(!m)return;
+    let qparts=[m[2]], ans={A:[],B:[],C:[],D:[]}, hint=[], difficulty='';
+    let mode='q', letter=null;
+    block.slice(1).forEach(line=>{
+      let a=line.match(/^([A-D])\.\s*(.*)$/);
+      let h=line.match(/^Hint\s*(.*)$/i);
+      let d=line.match(/^Difficulty\s*(?:[:\-])?\s*(easy|medium|hard)\s*$/i);
+      if(a){letter=a[1];ans[letter].push(a[2]);mode='a'}
+      else if(h){hint.push(h[1]);letter=null;mode='h'}
+      else if(d){difficulty=d[1].toLowerCase();letter=null;mode='d'}
+      else if(mode==='q')qparts.push(line);
+      else if(mode==='a'&&letter)ans[letter].push(line);
+      else if(mode==='h')hint.push(line);
+    });
+    qs.push({
+      localNo:+m[1],source:fileName,title,chapter,
+      question:clean(qparts.join(' ')),
+      category:inferCategory(fileName), difficulty:difficulty,
+      answers:'ABCD'.split('').map(L=>clean(ans[L].join(' '))),
+      hint:clean(hint.join(' ')),correct:null,explanation:''
+    });
+  });
+
+  let key={}, current=null;
+  keyLines.forEach(line=>{
+    let m=line.match(/^(\d+)\.\s*([A-D])(?:\s+(.*))?$/);
+    if(m){
+      current=+m[1];
+      key[current]={letter:m[2],explanation:clean(m[3]||'')};
+    } else if(current!==null){
+      key[current].explanation=clean(key[current].explanation+' '+line);
+    }
+  });
+
+  qs.forEach(q=>{
+    if(key[q.localNo]){
+      q.correct=correctIndex(key[q.localNo].letter);
+      q.explanation=key[q.localNo].explanation;
+    }
+  });
+  return qs;
+}
+
+async function readDocx(file,chapter){
+  const buffer=await file.arrayBuffer();
+  const result=await mammoth.extractRawText({arrayBuffer:buffer});
+  return parseText(result.value,file.name,chapter);
+}
+
+
+function renderMeta(){
+  metaBody.innerHTML='';
+  if(!fileMeta.length){
+    metaBody.innerHTML='<tr><td colspan="4" class="small">Επιλέξτε DOCX για να εμφανιστούν οι ρυθμίσεις.</td></tr>';
+    return;
+  }
+  fileMeta.forEach((m,i)=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td>${m.name}</td>
+      <td><input class="metaChapter" data-i="${i}" type="number" min="1" value="${m.chapter}" style="width:75px;padding:7px"></td>
+      <td><input class="metaCategory" data-i="${i}" value="${m.category.replace(/"/g,'&quot;')}" style="min-width:260px;width:100%;padding:7px"></td>
+      <td>${m.count}</td>`;
+    metaBody.appendChild(tr);
+  });
+  metaBody.querySelectorAll('.metaChapter').forEach(el=>el.addEventListener('input',()=>{
+    const i=+el.dataset.i; fileMeta[i].chapter=parseInt(el.value,10)||1; syncMeta(); render();
+  }));
+  metaBody.querySelectorAll('.metaCategory').forEach(el=>el.addEventListener('input',()=>{
+    const i=+el.dataset.i; fileMeta[i].category=el.value; syncMeta(); render();
+  }));
+}
+function syncMeta(){
+  parsed.forEach(q=>{
+    const m=fileMeta.find(x=>x.name===q.source);
+    if(m){ q.chapter=m.chapter; q.category=m.category; }
+  });
+}
+
+function render(){
+  filesEl.innerHTML='';
+  const sourceNames=[...new Set(parsed.map(x=>x.source))];
+  if(!sourceNames.length) filesEl.innerHTML='<li class="small">Δεν έχουν επιλεγεί αρχεία.</li>';
+  sourceNames.forEach(n=>{const li=document.createElement('li');li.textContent=n;filesEl.appendChild(li)});
+
+  tbody.innerHTML='';
+  let problems=0;
+  parsed.forEach((q,i)=>{
+    const missing=[];
+    if(!q.question)missing.push('question');
+    const answerCount=q.answers.filter(Boolean).length;
+    const contiguous=q.answers.slice(0,answerCount).every(Boolean) &&
+                     q.answers.slice(answerCount).every(x=>!x);
+    if(answerCount<2 || answerCount>4 || !contiguous)missing.push('answers');
+    if(q.correct===null || q.correct===undefined)missing.push('correct');
+    if(!q.hint)missing.push('hint');
+    if(!['easy','medium','hard'].includes(q.difficulty))missing.push('difficulty');
+    if(!q.explanation)missing.push('explanation');
+    if(missing.length)problems++;
+    const tr=document.createElement('tr');
+    const shownId=(parseInt(startIdEl.value,10)||1)+i;
+    tr.innerHTML=`<td>${shownId}</td><td>${q.chapter}</td><td>${q.question}</td>
+      <td>${q.difficulty || '—'}</td><td>${q.correct===null?'—':q.correct}</td>
+      <td>${missing.length?'⚠ '+missing.join(', '):'✓'}</td>`;
+    tbody.appendChild(tr);
+  });
+  if(!parsed.length)tbody.innerHTML='<tr><td colspan="6" class="small">Δεν υπάρχει προεπισκόπηση.</td></tr>';
+
+  if(parsed.length){
+    summary.className='status '+(problems?'warn':'ok');
+    summary.textContent=`Βρέθηκαν ${parsed.length} ερωτήσεις. ${problems?`Χρειάζονται έλεγχο: ${problems}.`:'Δεν βρέθηκαν ελλείψεις.'}`;
+    downloadBtn.disabled=false;
+  }else{
+    summary.className='status';
+    summary.textContent='Περιμένω αρχεία DOCX.';
+    downloadBtn.disabled=true;
+  }
+}
+
+function convertMathJax(text) {
+    if (!text) return '';
+
+    return text.replace(/\[([^\]]+)\]/g, (match, formula) => {
+        return `\\(\\displaystyle ${formula}\\)`;
+    });
+}
+
+function makeJS(){
+  let o=[];
+
+  const reference=referenceEl.value.trim()||'QuizLearn';
+
+  o.push('/* ==========================================================');
+  o.push(`   Quiz ${reference}`);
+  o.push('   Αυτόματη δημιουργία από DOCX');
+
+  const startId=parseInt(startIdEl.value,10)||1;
+  const endId=startId+parsed.length-1;
+
+  o.push(`   IDs ${startId}-${endId}`);
+  o.push('========================================================== */','','const QUESTIONS = [','');
+  parsed.forEach((q,i)=>{
+    const category=q.category;
+    o.push('{');
+    o.push(`    id:${startId+i},`);
+    o.push(`    category:${esc(category)},`);
+    o.push(`    difficulty:${esc(q.difficulty)},`);
+    o.push('    type:"multiple",');
+    o.push(`    question:${esc(convertMathJax(q.question))},`);
+    o.push('    answers:[');
+    const actualAnswers=q.answers.filter(Boolean);
+    actualAnswers.forEach((a,j)=>o.push(`        ${esc(convertMathJax(a))}${j<actualAnswers.length-1?',':''}`));
+    o.push('    ],');
+    o.push(`    correct:${q.correct==null?'null':q.correct},`);
+    o.push(`    hint:${esc(convertMathJax(q.hint))},`);
+	o.push(`    explanation:${esc(convertMathJax(q.explanation))},`);
+    o.push(`    tags:[${esc(category)}],`);
+    o.push('    image:null,');
+    o.push(`    reference:${esc(reference)},`);
+    o.push(`    chapter:${q.chapter},`);
+    o.push('    favorite:false');
+    o.push(i<parsed.length-1?'},':'}','');
+  });
+  o.push('];','');
+  return o.join('\n');
+}
+
+picker.addEventListener('change',async e=>{
+  if(typeof mammoth==='undefined'){
+    alert('Δεν φορτώθηκε η βιβλιοθήκη ανάγνωσης DOCX. Έλεγξε τη σύνδεση Internet ή χρησιμοποίησε την offline έκδοση.');
+    return;
+  }
+  parsed=[];
+  const fs=[...e.target.files].sort((a,b)=>a.name.localeCompare(b.name,'el',{numeric:true}));
+  summary.className='status'; summary.textContent='Γίνεται ανάγνωση των DOCX...';
+  try{
+    for(let i=0;i<fs.length;i++){
+      const qs=await readDocx(fs[i],i+1);
+      parsed.push(...qs);
+      fileMeta.push({
+        name:fs[i].name,
+        chapter:i+1,
+        category:qs.length ? qs[0].category : inferCategory(fs[i].name),
+        count:qs.length
+      });
+    }
+    syncMeta();
+    renderMeta();
+    render();
+  }catch(err){
+    console.error(err);
+    alert('Σφάλμα ανάγνωσης DOCX: '+err.message);
+  }
+});
+clearBtn.addEventListener('click',()=>{picker.value='';parsed=[];fileMeta=[];renderMeta();render()});
+startIdEl.addEventListener('input',render);
+downloadBtn.addEventListener('click',()=>{
+  const blob=new Blob([makeJS()],{type:'text/javascript;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download='questions-generated.js';a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+});
+render();
+</script>
+</body>
+</html>
