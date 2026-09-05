@@ -1458,18 +1458,18 @@ class QuizEngine {
 			Storage.getSettings();
 
 		this.EXAM_QUESTION_COUNT = Math.min(
-			settings.examQuestionCount ?? 48,
-			this.originalQuestions.length
+		    settings.examQuestionCount ?? 48,
+		    this.originalQuestions.length
 		);
-
+		
 		this.EXAM_REQUIRED_ANSWERS = Math.min(
-			settings.examRequiredAnswers ?? 42,
-			this.EXAM_QUESTION_COUNT
+		    settings.examRequiredAnswers ?? 42,
+		    this.EXAM_QUESTION_COUNT
 		);
-
+		
 		this.EXAM_MAX_SKIPS =
-			this.EXAM_QUESTION_COUNT -
-			this.EXAM_REQUIRED_ANSWERS;
+		    this.EXAM_QUESTION_COUNT -
+		    this.EXAM_REQUIRED_ANSWERS;
 		
 		// Παίρνουμε όλες τις ερωτήσεις
 
