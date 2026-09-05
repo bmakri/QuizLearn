@@ -267,8 +267,8 @@ class UIManager {
 		this.favoritesList.innerHTML = favorites
 		.map(id => {
 
-			const question = window.quiz.questions.find(
-				q => q.id === id
+			const question = window.quiz.originalQuestions.find(
+			    q => q.id === id
 			);
 
 			const text = question
