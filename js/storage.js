@@ -27,14 +27,18 @@ class StorageManager {
 
 		settings: {
 
-			shuffleQuestions: true,
-
-			shuffleAnswers: false,
-
-			sounds: true,
-
-			timer: true
-
+		    shuffleQuestions: true,
+		
+		    shuffleAnswers: false,
+		
+		    sounds: true,
+		
+		    timer: true,
+		
+		    examQuestionCount: 48,
+		
+		    examRequiredAnswers: 42
+		
 		}
 
 		};
