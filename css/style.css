@@ -1959,10 +1959,7 @@ button:disabled:hover {
 }
 
 @media (max-width: 640px) {
-    html {
-        background: #fff;
-    }
-
+    
     body {
         height: auto;
         min-height: 0;
