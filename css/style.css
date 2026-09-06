@@ -1957,3 +1957,9 @@ button:disabled:hover {
         flex-wrap: wrap;
     }
 }
+
+@media (max-width: 640px) {
+    html, body {
+        overflow-x: hidden;
+    }
+}
