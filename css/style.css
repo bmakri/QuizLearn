@@ -303,7 +303,7 @@ body{
 @media (max-width:640px){
 	#app{
 		width:100%;
-		padding:20px;
+		padding:10px;
 		align-items:center;
 	}
 	
