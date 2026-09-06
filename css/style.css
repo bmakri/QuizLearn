@@ -19,7 +19,7 @@
 }
 
 *{box-sizing:border-box}
-html,body{height:100%;margin:0}
+html,body{min-height:0;margin:0}
 body{
  font-family:Inter,"Segoe UI",Arial,sans-serif;
  background:linear-gradient(135deg,#2563eb,#4f46e5,#7c3aed);
