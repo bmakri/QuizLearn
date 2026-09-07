@@ -304,6 +304,9 @@ class UIManager {
 		})
 		.join("");
 
+		this.renderMath(this.favoritesList);
+		
+		}
 	}
 
 
@@ -838,13 +841,54 @@ class UIManager {
 
 	renderMath(element = null) {
 
-		if (!window.MathJax || !MathJax.typesetPromise) return;
-
 		const targets = element ? [element] : undefined;
-
-		MathJax.typesetPromise(targets).catch(err => {
-			console.error("MathJax error:", err);
+	
+		// Αν το MathJax είναι ήδη έτοιμο, κάνε typeset αμέσως
+		if (window.MathJax?.typesetPromise) {
+	
+			MathJax.typesetPromise(targets).catch(err => {
+				console.error("MathJax error:", err);
+			});
+	
+			return;
+		}
+	
+		// Αν ήδη φορτώνεται, περίμενε την ίδια φόρτωση
+		if (window.mathJaxLoading) {
+	
+			window.mathJaxLoading.then(() => {
+				MathJax.typesetPromise(targets).catch(err => {
+					console.error("MathJax error:", err);
+				});
+			});
+	
+			return;
+		}
+	
+		// Lazy loading του MathJax
+		window.mathJaxLoading = new Promise((resolve, reject) => {
+	
+			const script = document.createElement("script");
+	
+			script.id = "MathJax-script";
+			script.src =
+				"https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js";
+	
+			script.async = true;
+	
+			script.onload = () => resolve();
+			script.onerror = () => reject(
+				new Error("Αποτυχία φόρτωσης MathJax")
+			);
+	
+			document.head.appendChild(script);
 		});
+	
+		window.mathJaxLoading
+			.then(() => MathJax.typesetPromise(targets))
+			.catch(err => {
+				console.error("MathJax error:", err);
+			});
 	}
 
     /* ==========================================
