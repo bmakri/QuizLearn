@@ -1,8 +1,7 @@
 DOCX → questions.js — HTML/JavaScript v1.3
 
 Νέα στη v1.3
-- Το Difficulty ΔΕΝ ορίζεται πλέον από την εφαρμογή.
-- Διαβάζεται ξεχωριστά από κάθε ερώτηση του DOCX.
+- Το Difficulty διαβάζεται ξεχωριστά από κάθε ερώτηση του DOCX.
 - Αναμενόμενη γραμμή μετά το Hint:
     Difficulty easy
     Difficulty medium
