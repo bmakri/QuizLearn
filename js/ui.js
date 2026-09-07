@@ -306,7 +306,6 @@ class UIManager {
 
 		this.renderMath(this.favoritesList);
 		
-		}
 	}
 
 
