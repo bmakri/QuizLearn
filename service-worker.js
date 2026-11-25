@@ -1,15 +1,17 @@
-const CACHE_NAME = "quiz-v1.5";
+const CACHE_NAME = "quiz-v1.7";
 const CACHE_PREFIX = "quiz-";
 
 const ASSETS = [
     "./",
     "./index.html",
     "./css/style.css",
-    "./data/questions.js",
+    "./data/questions.json",
+	"./data/questions.js",
     "./js/storage.js",
     "./js/ui.js",
     "./js/quiz.js",
     "./js/app.js",
+	"./js/banks.js",
     "./manifest.json",
     "./icons/favicon.png",
     "./icons/icon-192.png",
