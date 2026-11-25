@@ -4,7 +4,7 @@
   "description": "QuizLearn — Μάθε • Εξασκήσου • Αξιολογήσου",
   "start_url": "./index.html",
   "display": "standalone",
-  "orientation": "portrait",
+  "orientation": "any",
   "background_color": "#2563eb",
   "theme_color": "#2563eb",
   "lang": "el",
