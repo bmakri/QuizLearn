@@ -32,7 +32,7 @@ HTML5, CSS3, JavaScript, Local Storage, IndexedDB, MathJax, Web App Manifest κ�
 - `js/storage.js`: τοπική αποθήκευση.
 - `js/banks.js`: διαχείριση προσωπικών τραπεζών.
 - `data/questions.js`: προεπιλεγμένες ερωτήσεις.
-- `docx-to-questions.html`: εργαλείο μετατροπής DOCX.
+- `DOCX_to_questions_HTML/docx-to-questions.html`: εργαλείο μετατροπής DOCX σε JSON.
 - `service-worker.js`: προσωρινή αποθήκευση αρχείων για offline χρήση.
 
 ## Άδειες χρήσης
