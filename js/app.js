@@ -4,7 +4,7 @@
    Bootstrap εφαρμογής
 ===================================================== */
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
 
     console.clear();
 
@@ -12,14 +12,55 @@ document.addEventListener("DOMContentLoaded", () => {
 	console.log(" QuizLearn");
 	console.log("====================================");
 
-    // Δημιουργία Quiz Engine
-    window.quiz = new QuizEngine();
+	 // Φόρτωση προεπιλεγμένης τράπεζας QuizLearn
+    // Λειτουργεί τοπικά (file://) και διαδικτυακά
 
-    // Εκκίνηση Quiz
-    window.quiz.init();
+    try {
 
-    // Dashboard
-    updateDashboard();
+        if (
+            !Array.isArray(window.QUESTIONS) ||
+            window.QUESTIONS.length === 0
+        ) {
+            throw new Error(
+                "Δεν βρέθηκε έγκυρη προεπιλεγμένη τράπεζα ερωτήσεων."
+            );
+        }
+
+        document.getElementById("activeQuestionsFile").textContent =
+            "Τράπεζα QuizLearn";
+
+        console.log(
+            "Φορτώθηκε η Τράπεζα QuizLearn:",
+            window.QUESTIONS.length,
+            "ερωτήσεις"
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Σφάλμα φόρτωσης βασικής τράπεζας:",
+            error
+        );
+
+        alert(
+            "Δεν ήταν δυνατή η φόρτωση της Τράπεζας QuizLearn."
+        );
+
+        return;
+    }
+
+	// Δημιουργία Quiz Engine
+		window.quiz = new QuizEngine();
+
+	// Εκκίνηση Quiz
+		window.quiz.init();
+
+	// Επαναφορά τελευταίας προσωπικής τράπεζας
+		await restoreActiveBank();
+
+	// Dashboard
+		updateDashboard();
+
 	
 	// ==========================================
 	// Settings
@@ -315,9 +356,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
 				if (!file) return;
 
-				if (!file.name.toLowerCase().endsWith(".js")) {
-
-					alert("Παρακαλώ επιλέξτε αρχείο .js");
+				if (!file.name.toLowerCase().endsWith(".json")) {
+					alert("Παρακαλώ επιλέξτε αρχείο .json");
 
 					questionsFileInput.value = "";
 					return;
@@ -327,14 +367,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 					const text = await file.text();
 
-					const getQuestions =
-						new Function(
-							text +
-							"\nreturn typeof QUESTIONS !== 'undefined' ? QUESTIONS : null;"
-						);
-
-					const importedQuestions =
-						getQuestions();
+					const importedQuestions = JSON.parse(text);
 
 					if (
 						!Array.isArray(importedQuestions) ||
@@ -345,29 +378,64 @@ document.addEventListener("DOMContentLoaded", () => {
 						);
 					}
 
-					window.QUESTIONS = [...importedQuestions];
+					
+					
+					const saveBank = confirm(
+						`Το αρχείο "${file.name}" περιέχει ` +
+						`${importedQuestions.length} ερωτήσεις.\n\n` +
+						`Θέλεις να αποθηκευτεί στις «Τράπεζές μου»;`
+					);
 
-					window.quiz.originalQuestions = [...importedQuestions];
+					if (saveBank) {
 
-					window.quiz.questions = [...importedQuestions];
+						const bankName = file.name.replace(/\.json$/i, "");
 
-					if (activeQuestionsFile) {
+						const existingBanks = await QuizBanks.getAll();
 
-						activeQuestionsFile.textContent =
-							file.name;
+						const duplicateBank = existingBanks.find(
+							bank => bank.name.toLowerCase() === bankName.toLowerCase()
+						);
 
-						activeQuestionsFile.title =
-							file.name;
+						if (duplicateBank) {
+
+							const createCopy = confirm(
+								`Υπάρχει ήδη τράπεζα με όνομα "${bankName}".\n\n` +
+								`Θέλεις να δημιουργήσεις δεύτερη τράπεζα με το ίδιο όνομα;`
+							);
+
+							if (!createCopy) {
+								alert("Η αποθήκευση ακυρώθηκε.");
+								return;
+							}
+
+						}
+
+
+						await QuizBanks.save(
+							bankName,
+							importedQuestions
+						);
+
+						console.log(
+							`Αποθηκεύτηκε η τράπεζα: ${bankName}`
+						);
 					}
+										
 
 					console.log(
-						`Φορτώθηκαν ${importedQuestions.length} ερωτήσεις από ${file.name}`
+						`Ελέγχθηκε το αρχείο ${file.name} - ${importedQuestions.length} ερωτήσεις`
 					);
 
 					alert(
-						`Το αρχείο "${file.name}" φορτώθηκε επιτυχώς.\n\n` +
-						`Ερωτήσεις: ${importedQuestions.length}`
+						saveBank
+							? `Το αρχείο "${file.name}" αποθηκεύτηκε στις «Τράπεζές μου».\n\n` +
+							  `Ερωτήσεις: ${importedQuestions.length}\n` +
+							  `Η ενεργή τράπεζα δεν άλλαξε.`
+							: `Το αρχείο "${file.name}" ελέγχθηκε, αλλά δεν αποθηκεύτηκε.\n\n` +
+							  `Η ενεργή τράπεζα δεν άλλαξε.`
 					);
+
+					questionsFileInput.value = "";
 
 				}
 				catch (error) {
@@ -378,7 +446,8 @@ document.addEventListener("DOMContentLoaded", () => {
 					);
 
 					alert(
-						"Το αρχείο δεν έχει τη σωστή μορφή questions.js."
+						"Η εισαγωγή ή η αποθήκευση του JSON απέτυχε.\n\n" +
+						error.message
 					);
 
 					questionsFileInput.value = "";
@@ -424,8 +493,27 @@ document.addEventListener("DOMContentLoaded", () => {
 		);
 
 	}
-	
-	    // ==========================================
+	   
+		
+		// ==========================================
+		// Επιστροφή από Δημιουργία Quiz στις Ρυθμίσεις
+		// ==========================================
+
+		const backToSettingsBtn =
+			document.getElementById("backToSettingsBtn");
+
+		if (backToSettingsBtn) {
+
+			backToSettingsBtn.addEventListener("click", () => {
+
+				UI.showSettings();
+
+			});
+
+		}
+
+		
+		// ==========================================
 		// Επιστροφή από Δημιουργία Quiz στην Αρχική
 		// ==========================================
 
