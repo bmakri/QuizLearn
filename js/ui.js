@@ -164,16 +164,20 @@ class UIManager {
        Απόκρυψη όλων των οθονών
     ========================================== */
 
-    hideAllScreens() {
+	   hideAllScreens() {
 
-        this.dashboard?.classList.add("hidden");
+		this.dashboard?.classList.add("hidden");
 		this.quizScreen?.classList.add("hidden");
 		this.favoritesScreen?.classList.add("hidden");
 		this.statisticsScreen?.classList.add("hidden");
 		this.settingsScreen?.classList.add("hidden");
+
+		// Απόκρυψη της Δημιουργίας Quiz
+		document.getElementById("generatorScreen")?.classList.add("hidden");
+
 		this.resultModal?.classList.add("hidden");
 
-    }
+	}
 
     /* ==========================================
        Dashboard
