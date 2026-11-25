@@ -140,38 +140,22 @@ class QuizEngine {
 
 	loadQuestions() {
 
-		if (typeof QUESTIONS !== "undefined") {
-
-			this.questions = [...QUESTIONS];
-
-		}
-		else if (window.QUESTIONS) {
-
-			this.questions = [...window.QUESTIONS];
-
-		}
-		else {
+		if (!Array.isArray(window.QUESTIONS) ||
+			window.QUESTIONS.length === 0) {
 
 			console.error("Δεν βρέθηκαν ερωτήσεις.");
-
 			return;
-
 		}
 
-		this.questions = this.questions.filter(Boolean);
-		
+		this.questions = [...window.QUESTIONS].filter(Boolean);
+
 		this.originalQuestions = [...this.questions];
 
 		if (this.shuffleQuestions) {
-
 			this.shuffle(this.questions);
-
 		}
 
-		console.log(
-			"Questions:",
-			this.questions.length
-		);
+		console.log("Questions:", this.questions.length);
 	}
 
     /* ==========================================
