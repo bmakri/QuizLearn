@@ -1327,3 +1327,4 @@ const QUESTIONS = [
 }
 
 ];
+window.QUESTIONS = QUESTIONS;
