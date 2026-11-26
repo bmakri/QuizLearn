@@ -6,7 +6,7 @@
 
 - Εφαρμογή: https://bmakri.github.io/QuizLearn/
 - Αποθετήριο: https://github.com/bmakri/QuizLearn
-- [Οδηγός χρήσης (PDF)](QuizLearn_Odigos_Xrisis.pdf)
+- [Οδηγός χρήσης (PDF)](Οδηγίες Χρήσης QuizLearn.pdf)
 
 ## 1. Εκκίνηση και αρχική οθόνη
 
