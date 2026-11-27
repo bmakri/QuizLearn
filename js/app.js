@@ -955,8 +955,22 @@ function chooseStartupBank() {
             for (const bank of banks) {
                 const button = document.createElement("button");
                 button.type = "button";
-                button.className = "secondaryButton";
-                button.textContent = `${bank.name} (${bank.questions.length} ερωτήσεις)`;
+                button.className = "startup-bank-item";
+                const icon = document.createElement("span");
+                icon.className = "startup-bank-icon";
+                icon.setAttribute("aria-hidden", "true");
+                const details = document.createElement("span");
+                details.className = "startup-bank-details";
+                const name = document.createElement("strong");
+                name.textContent = bank.name;
+                const count = document.createElement("small");
+                count.textContent = `${bank.questions.length} ${bank.questions.length === 1 ? "ερώτηση" : "ερωτήσεις"}`;
+                details.append(name, count);
+                const arrow = document.createElement("span");
+                arrow.className = "startup-bank-arrow";
+                arrow.setAttribute("aria-hidden", "true");
+                arrow.textContent = "›";
+                button.append(icon, details, arrow);
                 button.addEventListener("click", () => run(() => finish(bank.questions, bank.name, bank.id)));
                 list.appendChild(button);
             }
