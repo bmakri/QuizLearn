@@ -1651,3 +1651,118 @@ button:disabled:hover {
         justify-content: flex-start;
     }
 }
+
+
+/* =========================================
+   ΠΑΡΑΘΥΡΟ ΕΠΙΛΟΓΗΣ ΤΡΑΠΕΖΑΣ ΕΚΚΙΝΗΣΗΣ
+========================================= */
+
+#startupBankDialog {
+    width: min(460px, calc(100% - 32px));
+    max-height: 90vh;
+    box-sizing: border-box;
+    margin: auto;
+    padding: 0;
+    border: none;
+    border-radius: 22px;
+    background: #ffffff;
+    color: #1e293b;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+    overflow-y: auto;
+}
+
+#startupBankDialog::backdrop {
+    background: rgba(15, 23, 42, 0.65);
+    backdrop-filter: blur(5px);
+}
+
+.startup-bank-panel {
+    padding: 32px;
+    text-align: center;
+}
+
+.startup-bank-panel img {
+    display: block;
+    object-fit: contain;
+    margin: 0 auto 16px;
+}
+
+#startupBankTitle {
+    font-size: 24px;
+    color: #1e40af;
+    margin: 0 0 12px;
+}
+
+.startup-bank-panel p {
+    font-size: 15px;
+    line-height: 1.6;
+    color: #64748b;
+}
+
+#startupDefaultBank,
+#startupImportBank,
+#startupSavedBanks {
+    display: block;
+    width: 100%;
+    min-height: 56px;
+    margin: 12px 0;
+    padding: 14px 16px;
+    border: 1px solid #bfdbfe;
+    border-radius: 12px;
+    background: #eff6ff;
+    color: #1e40af;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+}
+
+#startupDefaultBank {
+    background: #2563eb;
+    border-color: #2563eb;
+    color: #ffffff;
+}
+
+#startupDefaultBank:hover {
+    background: #1d4ed8;
+}
+
+#startupImportBank:hover,
+#startupSavedBanks:hover {
+    background: #dbeafe;
+}
+
+#startupBankDialog button:focus-visible {
+    outline: 3px solid #60a5fa;
+    outline-offset: 3px;
+}
+
+#startupSavedBankList {
+    max-height: 240px;
+    overflow-y: auto;
+    margin-top: 16px;
+}
+
+#startupBankStatus {
+    font-size: 14px;
+    color: #b45309;
+    margin: 12px 0 0;
+}
+
+#startupBankDialog [hidden] {
+    display: none !important;
+}
+
+@media (max-width: 480px) {
+    .startup-bank-panel {
+        padding: 22px;
+    }
+
+    #startupBankTitle {
+        font-size: 21px;
+    }
+
+    #startupBankDialog button {
+        font-size: 14px;
+    }
+}
