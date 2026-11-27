@@ -268,45 +268,44 @@ class UIManager {
 
 		}
 
-		this.favoritesList.innerHTML = favorites
-		.map(id => {
+		
+		this.favoritesList.replaceChildren();
+
+		favorites.forEach(id => {
 
 			const question = window.quiz.originalQuestions.find(
-			    q => q.id === id
+				q => q.id === id
 			);
 
 			const text = question
 				? question.question.substring(0, 80)
 				: "Άγνωστη ερώτηση";
 
-			return `
-			<div class="favorite-item">
+			const item = document.createElement("div");
+			item.className = "favorite-item";
 
-				<div class="favorite-header">
+			const header = document.createElement("div");
+			header.className = "favorite-header";
 
-					<strong>⭐ [${id}]</strong>
+			const title = document.createElement("strong");
+			title.textContent = `⭐ [${id}]`;
 
-					<button
-						class="remove-favorite"
-						data-id="${id}">
+			const button = document.createElement("button");
+			button.className = "remove-favorite";
+			button.dataset.id = id;
+			button.textContent = "🗑";
 
-						🗑
+			const favoriteText = document.createElement("div");
+			favoriteText.className = "favorite-text";
+			favoriteText.textContent = `${text}...`;
 
-					</button>
+			header.append(title, button);
+			item.append(header, favoriteText);
 
-				</div>
+			this.favoritesList.appendChild(item);
 
-				<div class="favorite-text">
+		});
 
-					${text}...
-
-				</div>
-
-			</div>
-		`;
-
-		})
-		.join("");
 
 		this.renderMath(this.favoritesList);
 		
@@ -904,8 +903,9 @@ class UIManager {
 
 		this.hintBox.classList.remove("hidden");
 
-		this.hintBox.innerHTML =
-			`<p>${text}</p>`;
+		const p = document.createElement("p");
+		p.textContent = text;
+		this.hintBox.replaceChildren(p);
 
 		this.renderMath(this.hintBox);
 	}
@@ -932,8 +932,9 @@ class UIManager {
 
 		this.feedback.classList.remove("hidden");
 
-		this.feedback.innerHTML =
-			`<p>${text}</p>`;
+		const p = document.createElement("p");
+		p.textContent = text;
+		this.feedback.replaceChildren(p);
 
 		this.renderMath(this.feedback);
 	}
