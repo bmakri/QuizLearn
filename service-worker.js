@@ -1,4 +1,4 @@
-const CACHE_NAME = "quiz-v2.1.0";
+const CACHE_NAME = "quiz-v2.1.0-r2";
 const CACHE_PREFIX = "quiz-";
 
 const ASSETS = [
