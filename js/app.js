@@ -9,734 +9,783 @@ document.addEventListener("DOMContentLoaded", async () => {
     console.clear();
 
     console.log("====================================");
-	console.log(" QuizLearn");
-	console.log("====================================");
+    console.log(" QuizLearn");
+    console.log("====================================");
 
-	 // Φόρτωση προεπιλεγμένης τράπεζας QuizLearn
-    // Λειτουργεί τοπικά (file://) και διαδικτυακά
+    // Επιλογή τράπεζας πριν από την αρχικοποίηση
+    const selected = await chooseStartupBank();
+    window.QUESTIONS = selected.questions;
+    if (selected.id) {
+        localStorage.setItem("quizlearn_active_bank", selected.id);
+    } else {
+        localStorage.removeItem("quizlearn_active_bank");
+    }
+    const activeLabel = document.getElementById("activeQuestionsFile");
+    if (activeLabel) {
+        activeLabel.textContent = selected.name;
+        activeLabel.title = selected.name;
+    }
+    window.quiz = new QuizEngine();
+    window.quiz.init();
+    console.log("Ενεργή τράπεζα:", selected.name, selected.questions.length);
 
-    try {
+    // Dashboard
 
-        if (
-            !Array.isArray(window.QUESTIONS) ||
-            window.QUESTIONS.length === 0
-        ) {
-            throw new Error(
-                "Δεν βρέθηκε έγκυρη προεπιλεγμένη τράπεζα ερωτήσεων."
-            );
-        }
+    updateDashboard();
 
-        document.getElementById("activeQuestionsFile").textContent =
-            "Τράπεζα QuizLearn";
+    // ==========================================
+    // Settings
+    // ==========================================
 
-        console.log(
-            "Φορτώθηκε η Τράπεζα QuizLearn:",
-            window.QUESTIONS.length,
-            "ερωτήσεις"
+    const settings =
+        Storage.getSettings();
+
+    const shuffleQuestionsSetting =
+        document.getElementById(
+            "shuffleQuestionsSetting"
         );
 
-    } catch (error) {
+    if (shuffleQuestionsSetting) {
 
-        console.error(
-            "Σφάλμα φόρτωσης βασικής τράπεζας:",
-            error
+        // Φόρτωση αποθηκευμένης επιλογής
+
+        shuffleQuestionsSetting.checked =
+            settings.shuffleQuestions ?? true;
+
+        // Αποθήκευση όταν αλλάζει το switch
+
+        shuffleQuestionsSetting.addEventListener(
+            "change",
+            () => {
+
+                const currentSettings =
+                    Storage.getSettings();
+
+                currentSettings.shuffleQuestions =
+                    shuffleQuestionsSetting.checked;
+
+                Storage.saveSettings(
+                    currentSettings
+                );
+
+            }
         );
 
-        alert(
-            "Δεν ήταν δυνατή η φόρτωση της Τράπεζας QuizLearn."
-        );
-
-        return;
     }
 
-	// Δημιουργία Quiz Engine
-		window.quiz = new QuizEngine();
+    const shuffleAnswersSetting =
+        document.getElementById(
+            "shuffleAnswersSetting"
+        );
 
-	// Εκκίνηση Quiz
-		window.quiz.init();
+    if (shuffleAnswersSetting) {
 
-	// Επαναφορά τελευταίας προσωπικής τράπεζας
-		await restoreActiveBank();
+        // Φόρτωση αποθηκευμένης επιλογής
 
-	// Dashboard
-		updateDashboard();
+        shuffleAnswersSetting.checked =
+            settings.shuffleAnswers ?? false;
 
-	
-	// ==========================================
-	// Settings
-	// ==========================================
+        // Αποθήκευση όταν αλλάζει το switch
 
-	const settings =
-		Storage.getSettings();
+        shuffleAnswersSetting.addEventListener(
+            "change",
+            () => {
 
-	const shuffleQuestionsSetting =
-		document.getElementById(
-			"shuffleQuestionsSetting"
-		);
+                const currentSettings =
+                    Storage.getSettings();
 
-	if (shuffleQuestionsSetting) {
+                currentSettings.shuffleAnswers =
+                    shuffleAnswersSetting.checked;
 
-		// Φόρτωση αποθηκευμένης επιλογής
+                Storage.saveSettings(
+                    currentSettings
+                );
 
-		shuffleQuestionsSetting.checked =
-			settings.shuffleQuestions ?? true;
+            }
+        );
 
+    }
 
-		// Αποθήκευση όταν αλλάζει το switch
+    const soundsSetting =
+        document.getElementById(
+            "soundsSetting"
+        );
 
-		shuffleQuestionsSetting.addEventListener(
-			"change",
-			() => {
+    if (soundsSetting) {
 
-				const currentSettings =
-					Storage.getSettings();
+        // Φόρτωση αποθηκευμένης επιλογής
 
-				currentSettings.shuffleQuestions =
-					shuffleQuestionsSetting.checked;
+        soundsSetting.checked =
+            settings.sounds ?? true;
 
-				Storage.saveSettings(
-					currentSettings
-				);
+        // Αποθήκευση όταν αλλάζει το switch
 
-			}
-		);
+        soundsSetting.addEventListener(
+            "change",
+            () => {
 
-	}
-	
-	const shuffleAnswersSetting =
-		document.getElementById(
-			"shuffleAnswersSetting"
-		);
+                const currentSettings =
+                    Storage.getSettings();
 
-	if (shuffleAnswersSetting) {
+                currentSettings.sounds =
+                    soundsSetting.checked;
 
-		// Φόρτωση αποθηκευμένης επιλογής
+                Storage.saveSettings(
+                    currentSettings
+                );
 
-		shuffleAnswersSetting.checked =
-			settings.shuffleAnswers ?? false;
+            }
+        );
 
+    }
 
-		// Αποθήκευση όταν αλλάζει το switch
+    const timerSetting =
+        document.getElementById(
+            "timerSetting"
+        );
 
-		shuffleAnswersSetting.addEventListener(
-			"change",
-			() => {
+    if (timerSetting) {
 
-				const currentSettings =
-					Storage.getSettings();
+        // Φόρτωση αποθηκευμένης επιλογής
 
-				currentSettings.shuffleAnswers =
-					shuffleAnswersSetting.checked;
+        timerSetting.checked =
+            settings.timer ?? true;
 
-				Storage.saveSettings(
-					currentSettings
-				);
+        // Αποθήκευση όταν αλλάζει το switch
 
-			}
-		);
+        timerSetting.addEventListener(
+            "change",
+            () => {
 
-	}
-	
-	const soundsSetting =
-		document.getElementById(
-			"soundsSetting"
-		);
+                const currentSettings =
+                    Storage.getSettings();
 
-	if (soundsSetting) {
+                currentSettings.timer =
+                    timerSetting.checked;
 
-		// Φόρτωση αποθηκευμένης επιλογής
+                Storage.saveSettings(
+                    currentSettings
+                );
 
-		soundsSetting.checked =
-			settings.sounds ?? true;
+            }
+        );
 
+    }
 
-		// Αποθήκευση όταν αλλάζει το switch
+    // ==========================================
+    // Ρυθμίσεις Εξέτασης
+    // ==========================================
 
-		soundsSetting.addEventListener(
-			"change",
-			() => {
+    const examQuestionCountSetting =
+        document.getElementById(
+            "examQuestionCountSetting"
+        );
 
-				const currentSettings =
-					Storage.getSettings();
+    const examRequiredAnswersSetting =
+        document.getElementById(
+            "examRequiredAnswersSetting"
+        );
 
-				currentSettings.sounds =
-					soundsSetting.checked;
+    const examMaxSkipsValue =
+        document.getElementById(
+            "examMaxSkipsValue"
+        );
 
-				Storage.saveSettings(
-					currentSettings
-				);
+    // Προεπιλεγμένες / αποθηκευμένες τιμές
 
-			}
-		);
+    const savedExamQuestionCount =
+        settings.examQuestionCount ?? 48;
 
-	}
-	
-	const timerSetting =
-		document.getElementById(
-			"timerSetting"
-		);
+    const savedExamRequiredAnswers =
+        settings.examRequiredAnswers ?? 42;
 
-	if (timerSetting) {
+    if (examQuestionCountSetting) {
+        examQuestionCountSetting.value =
+            savedExamQuestionCount;
+    }
 
-		// Φόρτωση αποθηκευμένης επιλογής
+    if (examRequiredAnswersSetting) {
+        examRequiredAnswersSetting.value =
+            savedExamRequiredAnswers;
+    }
 
-		timerSetting.checked =
-			settings.timer ?? true;
+    // Ενημέρωση ρυθμίσεων εξέτασης
 
+    function updateExamSettings() {
 
-		// Αποθήκευση όταν αλλάζει το switch
+        if (
+            !examQuestionCountSetting ||
+            !examRequiredAnswersSetting
+        ) return;
 
-		timerSetting.addEventListener(
-			"change",
-			() => {
+        let questionCount =
+            parseInt(examQuestionCountSetting.value, 10);
 
-				const currentSettings =
-					Storage.getSettings();
+        let requiredAnswers =
+            parseInt(examRequiredAnswersSetting.value, 10);
 
-				currentSettings.timer =
-					timerSetting.checked;
+        if (!Number.isFinite(questionCount) || questionCount < 1) {
+            questionCount = 48;
+        }
 
-				Storage.saveSettings(
-					currentSettings
-				);
+        if (!Number.isFinite(requiredAnswers) || requiredAnswers < 1) {
+            requiredAnswers = 42;
+        }
 
-			}
-		);
+        // Οι υποχρεωτικές δεν μπορούν να είναι
+        // περισσότερες από το σύνολο των ερωτήσεων
 
-	}
+        if (requiredAnswers > questionCount) {
+            requiredAnswers = questionCount;
+        }
 
-	// ==========================================
-	// Ρυθμίσεις Εξέτασης
-	// ==========================================
+        examQuestionCountSetting.value =
+            questionCount;
 
-	const examQuestionCountSetting =
-		document.getElementById("examQuestionCountSetting");
+        examRequiredAnswersSetting.value =
+            requiredAnswers;
 
-	const examRequiredAnswersSetting =
-		document.getElementById("examRequiredAnswersSetting");
+        const maxSkips =
+            questionCount - requiredAnswers;
 
-	const examMaxSkipsValue =
-		document.getElementById("examMaxSkipsValue");
+        if (examMaxSkipsValue) {
+            examMaxSkipsValue.textContent =
+                maxSkips;
+        }
 
+        const currentSettings =
+            Storage.getSettings();
 
-	// Προεπιλεγμένες / αποθηκευμένες τιμές
+        currentSettings.examQuestionCount =
+            questionCount;
 
-	const savedExamQuestionCount =
-		settings.examQuestionCount ?? 48;
+        currentSettings.examRequiredAnswers =
+            requiredAnswers;
 
-	const savedExamRequiredAnswers =
-		settings.examRequiredAnswers ?? 42;
+        Storage.saveSettings(
+            currentSettings
+        );
 
+    }
 
-	if (examQuestionCountSetting) {
-		examQuestionCountSetting.value =
-			savedExamQuestionCount;
-	}
+    // Αρχική εμφάνιση παραλείψεων
 
-	if (examRequiredAnswersSetting) {
-		examRequiredAnswersSetting.value =
-			savedExamRequiredAnswers;
-	}
+    if (examMaxSkipsValue) {
+        examMaxSkipsValue.textContent =
+            savedExamQuestionCount -
+            savedExamRequiredAnswers;
+    }
 
+    // Αποθήκευση όταν αλλάζουν οι τιμές
 
-	// Ενημέρωση ρυθμίσεων εξέτασης
+    examQuestionCountSetting?.addEventListener(
+        "input",
+        updateExamSettings
+    );
 
-	function updateExamSettings() {
+    examRequiredAnswersSetting?.addEventListener(
+        "input",
+        updateExamSettings
+    );
 
-		if (
-			!examQuestionCountSetting ||
-			!examRequiredAnswersSetting
-		) return;
+    // ==========================================
+    // Επιλογή εξωτερικού αρχείου ερωτήσεων
+    // ==========================================
 
-		let questionCount =
-			parseInt(examQuestionCountSetting.value, 10);
+    const selectQuestionsFileBtn =
+        document.getElementById(
+            "selectQuestionsFileBtn"
+        );
 
-		let requiredAnswers =
-			parseInt(examRequiredAnswersSetting.value, 10);
+    const questionsFileInput =
+        document.getElementById(
+            "questionsFileInput"
+        );
 
+    const activeQuestionsFile =
+        document.getElementById(
+            "activeQuestionsFile"
+        );
 
-		if (!Number.isFinite(questionCount) || questionCount < 1) {
-			questionCount = 48;
-		}
+    if (selectQuestionsFileBtn && questionsFileInput) {
 
-		if (!Number.isFinite(requiredAnswers) || requiredAnswers < 1) {
-			requiredAnswers = 42;
-		}
+        selectQuestionsFileBtn.addEventListener(
+            "click",
+            () => {
+                questionsFileInput.click();
+            }
+        );
 
+        questionsFileInput.addEventListener(
+            "change",
+            async () => {
 
-		// Οι υποχρεωτικές δεν μπορούν να είναι
-		// περισσότερες από το σύνολο των ερωτήσεων
+                const file = questionsFileInput.files[0];
 
-		if (requiredAnswers > questionCount) {
-			requiredAnswers = questionCount;
-		}
+                if (!file) return;
 
+                if (!/\.(json|xml)$/i.test(file.name)) {
 
-		examQuestionCountSetting.value =
-			questionCount;
+                    alert(
+                        "Παρακαλώ επιλέξτε αρχείο .json ή .xml"
+                    );
 
-		examRequiredAnswersSetting.value =
-			requiredAnswers;
+                    questionsFileInput.value = "";
 
+                    return;
+                }
 
-		const maxSkips =
-			questionCount - requiredAnswers;
+                try {
 
-		if (examMaxSkipsValue) {
-			examMaxSkipsValue.textContent =
-				maxSkips;
-		}
+                    const text = await file.text();
 
+                    const isXML =
+                        /\.xml$/i.test(file.name);
 
-		const currentSettings =
-			Storage.getSettings();
+                    const result =
+                        isXML ? QuizQTI.parse(text) : null;
 
-		currentSettings.examQuestionCount =
-			questionCount;
+                    const importedQuestions =
+                        isXML
+                            ? result.questions
+                            : JSON.parse(text);
 
-		currentSettings.examRequiredAnswers =
-			requiredAnswers;
-
-		Storage.saveSettings(
-			currentSettings
-		);
-	}
-
-
-	// Αρχική εμφάνιση παραλείψεων
-
-	if (examMaxSkipsValue) {
-		examMaxSkipsValue.textContent =
-			savedExamQuestionCount -
-			savedExamRequiredAnswers;
-	}
-
-
-	// Αποθήκευση όταν αλλάζουν οι τιμές
-
-	examQuestionCountSetting?.addEventListener(
-		"input",
-		updateExamSettings
-	);
-
-	examRequiredAnswersSetting?.addEventListener(
-		"input",
-		updateExamSettings
-	);
-
-
-	// ==========================================
-	// Επιλογή εξωτερικού αρχείου ερωτήσεων
-	// ==========================================
-
-	const selectQuestionsFileBtn =
-		document.getElementById("selectQuestionsFileBtn");
-
-	const questionsFileInput =
-		document.getElementById("questionsFileInput");
-
-	const activeQuestionsFile =
-		document.getElementById("activeQuestionsFile");
-
-
-	if (selectQuestionsFileBtn && questionsFileInput) {
-
-		selectQuestionsFileBtn.addEventListener(
-			"click",
-			() => {
-				questionsFileInput.click();
-			}
-		);
-
-		questionsFileInput.addEventListener(
-			"change",
-			async () => {
-
-				const file = questionsFileInput.files[0];
-
-				if (!file) return;
-
-				if (!/\.(json|xml)$/i.test(file.name)) {
-					alert("Παρακαλώ επιλέξτε αρχείο .json ή .xml");
-
-					questionsFileInput.value = "";
-					return;
-				}
-
-				try {
-
-					const text = await file.text();
-
-					const isXML = /\.xml$/i.test(file.name);
-                    const result = isXML ? QuizQTI.parse(text) : null;
-                    const importedQuestions = isXML ? result.questions : JSON.parse(text);
                     if (isXML) {
-                        const report = `Ερωτήσεις XML: ${result.total}\nΣυμβατές: ${importedQuestions.length}\nΠαραλείψεις: ${result.total-importedQuestions.length}\nΗ δυσκολία ορίζεται ως μέτρια.\n` + result.warnings.join("\n");
-                        if (!importedQuestions.length) throw new Error(report);
-                        if (!confirm(report + "\n\nΣυνέχεια στην αποθήκευση;")) { questionsFileInput.value = ""; return; }
+
+                        const report =
+                            `Ερωτήσεις XML: ${result.total}\n` +
+                            `Συμβατές: ${importedQuestions.length}\n` +
+                            `Παραλείψεις: ${result.total - importedQuestions.length}\n` +
+                            `Η δυσκολία ορίζεται ως μέτρια.\n` +
+                            result.warnings.join("\n");
+
+                        if (!importedQuestions.length) {
+                            throw new Error(report);
+                        }
+
+                        if (!confirm(report + "\n\nΣυνέχεια στην αποθήκευση;")) {
+
+                            questionsFileInput.value = "";
+
+                            return;
+                        }
+
                     }
 
-					if (
-						!Array.isArray(importedQuestions) ||
-						importedQuestions.length === 0
-					) {
-						throw new Error(
-							"Δεν βρέθηκε έγκυρος πίνακας QUESTIONS."
-						);
-					}
+                    if (
+                        !Array.isArray(importedQuestions) ||
+                        importedQuestions.length === 0
+                    ) {
+                        throw new Error(
+                            "Δεν βρέθηκε έγκυρος πίνακας QUESTIONS."
+                        );
+                    }
 
-					
-					
-					const saveBank = confirm(
-						`Το αρχείο "${file.name}" περιέχει ` +
-						`${importedQuestions.length} ερωτήσεις.\n\n` +
-						`Θέλεις να αποθηκευτεί στις «Τράπεζές μου»;`
-					);
+                    const saveBank = confirm(
+                        `Το αρχείο "${file.name}" περιέχει ` +
+                        `${importedQuestions.length} ερωτήσεις.\n\n` +
+                        `Θέλεις να αποθηκευτεί στις «Τράπεζές μου»;`
+                    );
 
-					if (saveBank) {
+                    if (saveBank) {
 
-						const bankName = file.name.replace(/\.(json|xml)$/i, "");
+                        const bankName =
+                            file.name.replace(/\.(json|xml)$/i, "");
 
-						const existingBanks = await QuizBanks.getAll();
+                        const existingBanks =
+                            await QuizBanks.getAll();
 
-						const duplicateBank = existingBanks.find(
-							bank => bank.name.toLowerCase() === bankName.toLowerCase()
-						);
+                        const duplicateBank =
+                            existingBanks.find(
+                                bank =>
+                                    bank.name.toLowerCase() ===
+                                    bankName.toLowerCase()
+                            );
 
-						if (duplicateBank) {
+                        if (duplicateBank) {
 
-							const createCopy = confirm(
-								`Υπάρχει ήδη τράπεζα με όνομα "${bankName}".\n\n` +
-								`Θέλεις να δημιουργήσεις δεύτερη τράπεζα με το ίδιο όνομα;`
-							);
+                            const createCopy = confirm(
+                                `Υπάρχει ήδη τράπεζα με όνομα "${bankName}".\n\n` +
+                                `Θέλεις να δημιουργήσεις δεύτερη τράπεζα με το ίδιο όνομα;`
+                            );
 
-							if (!createCopy) {
-								alert("Η αποθήκευση ακυρώθηκε.");
+                            if (!createCopy) {
+
+                                alert(
+                                    "Η αποθήκευση ακυρώθηκε."
+                                );
+
                                 questionsFileInput.value = "";
-								return;
-							}
 
-						}
+                                return;
+                            }
 
+                        }
 
-						await QuizBanks.save(
-							bankName,
-							importedQuestions
-						);
+                        await QuizBanks.save(
+                            bankName,
+                            importedQuestions
+                        );
 
-						if (!document.getElementById("myBanksPanel").hidden) await showMyBanks();
+                        if (!document.getElementById("myBanksPanel").hidden) {
+                            await showMyBanks();
+                        }
+
                         console.log(
-							`Αποθηκεύτηκε η τράπεζα: ${bankName}`
-						);
-					}
-										
+                            `Αποθηκεύτηκε η τράπεζα: ${bankName}`
+                        );
 
-					console.log(
-						`Ελέγχθηκε το αρχείο ${file.name} - ${importedQuestions.length} ερωτήσεις`
-					);
+                    }
 
-					alert(
-						saveBank
-							? `Το αρχείο "${file.name}" αποθηκεύτηκε στις «Τράπεζές μου».\n\n` +
-							  `Ερωτήσεις: ${importedQuestions.length}\n` +
-							  `Η ενεργή τράπεζα δεν άλλαξε.`
-							: `Το αρχείο "${file.name}" ελέγχθηκε, αλλά δεν αποθηκεύτηκε.\n\n` +
-							  `Η ενεργή τράπεζα δεν άλλαξε.`
-					);
-
-					questionsFileInput.value = "";
+                    console.log(
+                        `Ελέγχθηκε το αρχείο ${file.name} - ${importedQuestions.length} ερωτήσεις`
+                    );
 
-				}
-				catch (error) {
-
-					console.error(
-						"Σφάλμα φόρτωσης αρχείου:",
-						error
-					);
+                    alert(
+                        saveBank
+                            ? `Το αρχείο "${file.name}" αποθηκεύτηκε στις «Τράπεζές μου».\n\n` +
+                              `Ερωτήσεις: ${importedQuestions.length}\n` +
+                              `Η ενεργή τράπεζα δεν άλλαξε.`
+                            : `Το αρχείο "${file.name}" ελέγχθηκε, αλλά δεν αποθηκεύτηκε.\n\n` +
+                              `Η ενεργή τράπεζα δεν άλλαξε.`
+                    );
 
-					alert(
-						"Η εισαγωγή ή η αποθήκευση του αρχείου απέτυχε.\n\n" +
-						error.message
-					);
-
-					questionsFileInput.value = "";
-				}
-			}
-		);
-	}
-
-
-	// ==========================================
-	// Δημιουργία Quiz
-	// ==========================================
-
-	const createQuizBtn =
-		document.getElementById(
-			"createQuizBtn"
-		);
+                    questionsFileInput.value = "";
 
-	if (createQuizBtn) {
+                } catch (error) {
 
-		createQuizBtn.addEventListener(
-			"click",
-			() => {
+                    console.error(
+                        "Σφάλμα φόρτωσης αρχείου:",
+                        error
+                    );
 
-				document
-					.querySelectorAll(".screen")
-					.forEach(screen => {
-						screen.classList.add("hidden");
-						screen.classList.remove("active");
-					});
+                    alert(
+                        "Η εισαγωγή ή η αποθήκευση του αρχείου απέτυχε.\n\n" +
+                        error.message
+                    );
 
-				const generatorScreen =
-					document.getElementById(
-						"generatorScreen"
-					);
+                    questionsFileInput.value = "";
 
-				if (generatorScreen) {
-					generatorScreen.classList.remove("hidden");
-					generatorScreen.classList.add("active");
-				}
+                }
 
-			}
-		);
+            }
+        );
 
-	}
-	   
-		
-		// ==========================================
-		// Επιστροφή από Δημιουργία Quiz στις Ρυθμίσεις
-		// ==========================================
+    }
 
-		const backToSettingsBtn =
-			document.getElementById("backToSettingsBtn");
+    // ==========================================
+    // Δημιουργία Quiz
+    // ==========================================
 
-		if (backToSettingsBtn) {
+    const createQuizBtn =
+        document.getElementById(
+            "createQuizBtn"
+        );
 
-			backToSettingsBtn.addEventListener("click", () => {
+    if (createQuizBtn) {
 
-				UI.showSettings();
+        createQuizBtn.addEventListener(
+            "click",
+            () => {
 
-			});
+                document
+                    .querySelectorAll(".screen")
+                    .forEach(screen => {
 
-		}
+                        screen.classList.add("hidden");
+                        screen.classList.remove("active");
 
-		
-		// ==========================================
-		// Επιστροφή από Δημιουργία Quiz στην Αρχική
-		// ==========================================
+                    });
 
-		const generatorHomeLink =
-			document.getElementById("generatorHomeLink");
+                const generatorScreen =
+                    document.getElementById(
+                        "generatorScreen"
+                    );
 
-		if (generatorHomeLink) {
+                if (generatorScreen) {
 
-			generatorHomeLink.addEventListener(
-				"click",
-				() => {
+                    generatorScreen.classList.remove("hidden");
+                    generatorScreen.classList.add("active");
 
-					document
-						.querySelectorAll(".screen")
-						.forEach(screen => {
-							screen.classList.add("hidden");
-							screen.classList.remove("active");
-						});
+                }
 
-					const dashboard =
-						document.getElementById("dashboard");
+            }
+        );
 
-					if (dashboard) {
-						dashboard.classList.remove("hidden");
-						dashboard.classList.add("active");
-					}
+    }
 
-				}
-			);
+    // ==========================================
+    // Επιστροφή από Δημιουργία Quiz στις Ρυθμίσεις
+    // ==========================================
 
-		}
-	
-	const resetProgressBtn =
-		document.getElementById(
-			"resetProgressBtn"
-		);
+    const backToSettingsBtn =
+        document.getElementById(
+            "backToSettingsBtn"
+        );
 
-	if (resetProgressBtn) {
+    if (backToSettingsBtn) {
 
-		resetProgressBtn.addEventListener(
-			"click",
-			() => {
+        backToSettingsBtn.addEventListener(
+            "click",
+            () => {
 
-				const ok = UI.confirm(
-					"Θέλεις να διαγράψεις όλα τα αποθηκευμένα στατιστικά και την πρόοδό σου;"
-				);
+                UI.showSettings();
 
-				if (!ok) return;
+            }
+        );
 
-				Storage.reset();
+    }
 
-				updateDashboard();
+    // ==========================================
+    // Επιστροφή από Δημιουργία Quiz στην Αρχική
+    // ==========================================
 
-				UI.alert(
-					"Η πρόοδος και τα στατιστικά διαγράφηκαν."
-				);
+    const generatorHomeLink =
+        document.getElementById(
+            "generatorHomeLink"
+        );
 
-			}
-		);
+    if (generatorHomeLink) {
 
-	}
-	
-	UI.bindEvents({
+        generatorHomeLink.addEventListener(
+            "click",
+            () => {
 
-		onStudy() {
+                document
+                    .querySelectorAll(".screen")
+                    .forEach(screen => {
 
-			window.quiz.restartQuiz();
+                        screen.classList.add("hidden");
+                        screen.classList.remove("active");
 
-		},
+                    });
 
-		onExam() {
+                const dashboard =
+                    document.getElementById(
+                        "dashboard"
+                    );
 
-			window.quiz.startExam();
+                if (dashboard) {
 
-		},
+                    dashboard.classList.remove("hidden");
+                    dashboard.classList.add("active");
 
-		onRandom() {
+                }
 
-			window.quiz.startRandomQuiz();
+            }
+        );
 
-		},
+    }
 
-		onFavorites() {
+    // ==========================================
+    // Επαναφορά προόδου
+    // ==========================================
 
-			UI.showFavorites();
+    const resetProgressBtn =
+        document.getElementById(
+            "resetProgressBtn"
+        );
 
-			UI.renderFavorites(
-				Storage.getFavorites()
-			);
+    if (resetProgressBtn) {
 
-		},
+        resetProgressBtn.addEventListener(
+            "click",
+            () => {
 
-		onStatistics() {
+                const ok = UI.confirm(
+                    "Θέλεις να διαγράψεις όλα τα αποθηκευμένα στατιστικά και την πρόοδό σου;"
+                );
 
-			const stats = {
+                if (!ok) return;
 
-				bestPercent:
-					Storage.getBestPercent(),
+                Storage.reset();
 
-				lastScore:
-					Storage.getLastScore(),
+                updateDashboard();
 
-				lastTotal:
-					Storage.getLastTotal(),
+                UI.alert(
+                    "Η πρόοδος και τα στατιστικά διαγράφηκαν."
+                );
 
-				attempts:
-					Storage.getAttempts(),
+            }
+        );
 
-				correct:
-					Storage.getTotalCorrect(),
+    }
 
-				wrong:
-					Storage.getTotalWrong(),
+    // ==========================================
+    // Σύνδεση συμβάντων διεπαφής
+    // ==========================================
 
-				accuracy:
-					Storage.getAccuracy()
+    UI.bindEvents({
 
-			};
+        onStudy() {
 
-			UI.updateStatistics(stats);
+            window.quiz.restartQuiz();
 
-			UI.showStatistics();
+        },
 
-		},
+        onExam() {
 
-		onSettings() {
-			
-			UI.showSettings();
+            window.quiz.startExam();
 
-		},
+        },
 
-		onDashboard() {
+        onRandom() {
 
-			UI.showDashboard();
+            window.quiz.startRandomQuiz();
 
-		}
+        },
 
-	});
-	
-	
-	UI.startFavoritesButton?.addEventListener(
-		"click",
-		() => {
+        onFavorites() {
 
-			window.quiz.startFavoritesQuiz();
+            UI.showFavorites();
 
-		}
-	);
-	
-	UI.clearFavoritesButton?.addEventListener(
-		"click",
-		() => {
+            UI.renderFavorites(
+                Storage.getFavorites()
+            );
 
-			const ok = UI.confirm(
-				"Θέλεις να διαγράψεις όλες τις αγαπημένες ερωτήσεις;"
-			);
+        },
 
-			if (!ok) return;
+        onStatistics() {
 
-			Storage.clearFavorites();
+            const stats = {
 
-			UI.renderFavorites([]);
+                bestPercent:
+                    Storage.getBestPercent(),
 
-		}
-	);
-	
-		
-	
-	document.addEventListener("click", (event) => {
+                lastScore:
+                    Storage.getLastScore(),
 
-		const button = event.target.closest(".remove-favorite");
+                lastTotal:
+                    Storage.getLastTotal(),
 
-		if (!button) return;
+                attempts:
+                    Storage.getAttempts(),
 
-		const id = Number(button.dataset.id);
+                correct:
+                    Storage.getTotalCorrect(),
 
-		Storage.removeFavorite(id);
+                wrong:
+                    Storage.getTotalWrong(),
 
-		UI.renderFavorites(
-			Storage.getFavorites()
-		);
-		
-		window.quiz.updateFavoriteButton();
+                accuracy:
+                    Storage.getAccuracy()
 
-	});
+            };
 
+            UI.updateStatistics(stats);
 
-	// Toolbar shortcuts
+            UI.showStatistics();
+
+        },
+
+        onSettings() {
+
+            UI.showSettings();
+
+        },
+
+        onDashboard() {
+
+            UI.showDashboard();
+
+        }
+
+    });
+
+    // ==========================================
+    // Αγαπημένες ερωτήσεις
+    // ==========================================
+
+    UI.startFavoritesButton?.addEventListener(
+        "click",
+        () => {
+
+            window.quiz.startFavoritesQuiz();
+
+        }
+    );
+
+    UI.clearFavoritesButton?.addEventListener(
+        "click",
+        () => {
+
+            const ok = UI.confirm(
+                "Θέλεις να διαγράψεις όλες τις αγαπημένες ερωτήσεις;"
+            );
+
+            if (!ok) return;
+
+            Storage.clearFavorites();
+
+            UI.renderFavorites([]);
+
+        }
+    );
+
+    document.addEventListener(
+        "click",
+        (event) => {
+
+            const button =
+                event.target.closest(".remove-favorite");
+
+            if (!button) return;
+
+            const id =
+                Number(button.dataset.id);
+
+            Storage.removeFavorite(id);
+
+            UI.renderFavorites(
+                Storage.getFavorites()
+            );
+
+            window.quiz.updateFavoriteButton();
+
+        }
+    );
+
+    // ==========================================
+    // Toolbar shortcuts
+    // ==========================================
 
     document.getElementById("topStudy")
-        ?.addEventListener("click", () =>
-            document.getElementById("btnStudy")?.click());
+        ?.addEventListener(
+            "click",
+            () => document.getElementById("btnStudy")?.click()
+        );
 
     document.getElementById("topExam")
-        ?.addEventListener("click", () =>
-            document.getElementById("btnExam")?.click());
+        ?.addEventListener(
+            "click",
+            () => document.getElementById("btnExam")?.click()
+        );
 
     document.getElementById("topRandom")
-        ?.addEventListener("click", () =>
-            document.getElementById("btnRandom")?.click());
+        ?.addEventListener(
+            "click",
+            () => document.getElementById("btnRandom")?.click()
+        );
 
     document.getElementById("topFavorites")
-        ?.addEventListener("click", () =>
-            document.getElementById("btnFavorites")?.click());
+        ?.addEventListener(
+            "click",
+            () => document.getElementById("btnFavorites")?.click()
+        );
 
     document.getElementById("topStatistics")
-        ?.addEventListener("click", () =>
-            document.getElementById("btnStatistics")?.click());
+        ?.addEventListener(
+            "click",
+            () => document.getElementById("btnStatistics")?.click()
+        );
 
     document.getElementById("topSettings")
-        ?.addEventListener("click", () =>
-            document.getElementById("btnSettings")?.click());
+        ?.addEventListener(
+            "click",
+            () => document.getElementById("btnSettings")?.click()
+        );
 
-});   // <-- ΜΟΝΟ ΕΔΩ κλείνει
+}); // Τέλος DOMContentLoaded
 
 /* =====================================================
    Dashboard
@@ -767,7 +816,6 @@ function updateDashboard() {
     const accuracy =
         Storage.getAccuracy();
 
-
     UI.updateDashboard({
 
         bestPercent,
@@ -786,13 +834,11 @@ function updateDashboard() {
 
     });
 
-
     UI.updateProgressRing(
         bestPercent
     );
 
 }
-
 
 /* =====================================================
    Κυκλική Πρόοδος
@@ -800,23 +846,121 @@ function updateDashboard() {
 
 function updateDashboardProgress(percent) {
 
-    const circle = document.getElementById("progressCircle");
-    const label = document.getElementById("progressPercent");
+    const circle =
+        document.getElementById("progressCircle");
+
+    const label =
+        document.getElementById("progressPercent");
 
     if (!circle || !label) return;
-	
-	
-	const radius = 60;
-    const circumference = 2 * Math.PI * radius;
 
-    circle.style.strokeDasharray = circumference;
+    const radius = 60;
+
+    const circumference =
+        2 * Math.PI * radius;
+
+    circle.style.strokeDasharray =
+        circumference;
 
     const offset =
         circumference -
         (percent / 100) * circumference;
 
-    circle.style.strokeDashoffset = offset;
+    circle.style.strokeDashoffset =
+        offset;
 
-    label.textContent = percent + "%";
+    label.textContent =
+        percent + "%";
 
+}
+
+/* Επιλογή τράπεζας κατά την εκκίνηση */
+function chooseStartupBank() {
+    const dialog = document.getElementById("startupBankDialog");
+    const defaultBtn = document.getElementById("startupDefaultBank");
+    const importBtn = document.getElementById("startupImportBank");
+    const savedBtn = document.getElementById("startupSavedBanks");
+    const input = document.getElementById("startupBankFile");
+    const list = document.getElementById("startupSavedBankList");
+    const status = document.getElementById("startupBankStatus");
+    const validate = questions => {
+        if (!Array.isArray(questions) || !questions.length ||
+            !questions.every(q => q && typeof q.question === "string" &&
+                q.question.trim() && Array.isArray(q.answers) &&
+                q.answers.length >= 2 && q.answers.every(a => typeof a === "string") &&
+                Number.isInteger(q.correct) && q.correct >= 0 && q.correct < q.answers.length)) {
+            throw new Error("Μη έγκυρη ή κενή τράπεζα ερωτήσεων.");
+        }
+        return questions;
+    };
+    return new Promise(resolve => {
+        let busy = false;
+        const buttons = [defaultBtn, importBtn, savedBtn];
+        function finish(questions, name, id = null) {
+            validate(questions);
+            dialog.close();
+            resolve({questions, name, id});
+        }
+        async function run(action) {
+            if (busy) return;
+            busy = true;
+            buttons.forEach(b => b.disabled = true);
+            status.textContent = "";
+            try { await action(); }
+            catch (error) { status.textContent = error.message; console.error(error); }
+            finally { busy = false; buttons.forEach(b => b.disabled = false); }
+        }
+        dialog.addEventListener("cancel", e => e.preventDefault());
+        defaultBtn.addEventListener("click", () => run(async () => {
+            let questions;
+            if (location.protocol === "file:") {
+                questions = JSON.parse(document.getElementById("defaultQuestionsBank").textContent);
+            } else {
+                const response = await fetch("./data/QuizLearn_Bank.json");
+                if (!response.ok) throw new Error("Σφάλμα HTTP: " + response.status);
+                questions = await response.json();
+            }
+            finish(questions, "Τράπεζα QuizLearn");
+        }));
+        importBtn.addEventListener("click", () => { input.value = ""; input.click(); });
+        input.addEventListener("change", () => run(async () => {
+            const file = input.files[0];
+            if (!file) return;
+            if (!/\.(json|xml)$/i.test(file.name)) throw new Error("Επιλέξτε JSON ή XML.");
+            const text = await file.text();
+            let questions;
+            if (/\.xml$/i.test(file.name)) {
+                const result = QuizQTI.parse(text);
+                questions = result.questions;
+                validate(questions);
+                if (!confirm(`Συμβατές ερωτήσεις: ${questions.length}/${result.total}\nΗ δυσκολία ορίζεται ως μέτρια.\n${result.warnings.join("\n")}\n\nΣυνέχεια;`)) return;
+            } else questions = JSON.parse(text);
+            validate(questions);
+            const name = file.name.replace(/\.(json|xml)$/i, "");
+            let id = null;
+            if (confirm(`Να αποθηκευτεί η τράπεζα «${name}» στις Τράπεζές μου;`)) {
+                const banks = await QuizBanks.getAll();
+                if (!banks.some(b => b.name.toLowerCase() === name.toLowerCase()) ||
+                    confirm("Υπάρχει ήδη τράπεζα με αυτό το όνομα. Να δημιουργηθεί αντίγραφο;")) {
+                    id = (await QuizBanks.save(name, questions)).id;
+                }
+            }
+            finish(questions, name, id);
+        }));
+        savedBtn.addEventListener("click", () => run(async () => {
+            list.hidden = false;
+            list.replaceChildren();
+            const banks = await QuizBanks.getAll();
+            if (!banks.length) list.textContent = "Δεν υπάρχουν αποθηκευμένες τράπεζες.";
+            for (const bank of banks) {
+                const button = document.createElement("button");
+                button.type = "button";
+                button.className = "secondaryButton";
+                button.textContent = `${bank.name} (${bank.questions.length} ερωτήσεις)`;
+                button.addEventListener("click", () => run(() => finish(bank.questions, bank.name, bank.id)));
+                list.appendChild(button);
+            }
+        }));
+        dialog.showModal();
+    });
 }
